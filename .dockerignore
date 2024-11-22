@@ -1,1 +1,35 @@
+# Node.js/React frontend build files
+frontend/node_modules
+frontend/.env
+frontend/build/*
+
+# Python/Flask backend virtual environments
+backend/__pycache__
+backend/env
+backend/venv
+
+# Git files
+.git
+.gitignore
+
+# Docker files
+.dockerignore
+Dockerfile
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE-specific files
+.vscode
+.idea
+*.swp
+
+# Log files
+*.log
+*.tmp
+
+# Temporary files
+*.bak
+*.orig
 
