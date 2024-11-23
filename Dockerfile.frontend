@@ -1,0 +1,16 @@
+# Gebruik een Node.js image om de frontend te bouwen
+FROM node:16 AS build
+
+# Werkdirectory instellen
+WORKDIR /app
+
+# Kopieer de frontend-bestanden naar de container
+COPY frontend/ .
+
+# Installeer de dependencies
+RUN npm install
+
+# Bouw de frontend
+RUN npm run build
+
+# De build-map wordt in deze container aangemaakt
