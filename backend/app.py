@@ -3,33 +3,32 @@ from wakeonlan import send_magic_packet
 
 app = Flask(__name__)
 
-devices = []  # Opslag voor configuraties
+# Opslag voor configuraties
+devices = []
 
 @app.route("/api/devices", methods=["POST"])
 def add_device():
+    """Voeg een nieuw apparaat toe."""
     data = request.json
-    new_device = {
+    device = {
         "id": len(devices) + 1,
         "domain": data["domain"],
         "ip": data["ip"],
         "mac": data["mac"]
     }
-    devices.append(new_device)
-    return jsonify(new_device), 201
+    devices.append(device)
+    return jsonify(device), 201
 
 @app.route("/api/nginx-config/<int:id>", methods=["GET"])
 def generate_nginx_config(id):
+    """Genereer een Nginx-configuratie voor een apparaat."""
     device = next((d for d in devices if d["id"] == id), None)
     if not device:
         return jsonify({"error": "Device not found"}), 404
 
     script = f"""
     location / {{
-        proxy_pass http://{device['ip']}:8080; # IP van de interne applicatie
-        access_log /data/logs/access.log;
-        error_log /data/logs/error.log;
-
-        # Seintje sturen naar deze applicatie
+        proxy_pass http://{device['ip']}:8080; # Intern IP van de applicatie
         access_by_lua_block {{
             local handle = io.popen("curl -s http://127.0.0.1:5001/api/wake/{device['id']} -X POST")
             local result = handle:read("*a")
@@ -42,6 +41,7 @@ def generate_nginx_config(id):
 
 @app.route("/api/wake/<int:id>", methods=["POST"])
 def wake_device(id):
+    """Stuur een Magic Packet naar een apparaat."""
     device = next((d for d in devices if d["id"] == id), None)
     if not device:
         return jsonify({"error": "Device not found"}), 404
@@ -54,7 +54,8 @@ def wake_device(id):
 
 @app.route("/")
 def index():
-    return "NPM Wake-on-LAN Application Running!"
+    """Basisroute voor controle."""
+    return "NPM Wake-on-LAN Applicatie draait!"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
