@@ -39,7 +39,7 @@ function App() {
                 />
                 <input
                     type="text"
-                    placeholder="NPM IP Address"
+                    placeholder="Internal IP"
                     value={ip}
                     onChange={(e) => setIp(e.target.value)}
                 />
