@@ -15,5 +15,10 @@ with app.app_context():
 # Initialiseer de routes
 init_routes(app)
 
+# Voeg een standaardpagina toe
+@app.route("/")
+def index():
+    return "NPMWOL Backend is running! Access the API at /api"
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
