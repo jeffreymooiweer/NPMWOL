@@ -9,7 +9,7 @@ class Device(db.Model):
     mac = db.Column(db.String(17), nullable=False)
 
 def init_db(app):
+    """Initialiseer de database en maak tabellen als ze niet bestaan."""
     db.init_app(app)
     with app.app_context():
         db.create_all()
-
