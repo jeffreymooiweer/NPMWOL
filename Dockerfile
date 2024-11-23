@@ -1,15 +1,13 @@
-FROM python:3.9-slim
-
-# Werkmap instellen
+FROM node:16 AS frontend
 WORKDIR /app
+COPY frontend/ .
+RUN npm install && npm run build
 
-# Kopieer bestanden en installeer dependencies
-COPY backend/ /app
+FROM python:3.9-slim AS backend
+WORKDIR /app
+COPY backend/ .
+COPY --from=frontend /app/build ./build
 RUN pip install -r requirements.txt
 
-# Poort openen
 EXPOSE 5001
-
-# Start applicatie
 CMD ["python", "app.py"]
-
