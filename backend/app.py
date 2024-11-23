@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, send_from_directory, jsonify, request
 from wakeonlan import send_magic_packet
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="build", static_url_path="")
 
-# Opslag voor configuraties
+# API voor apparaten
 devices = []
 
 @app.route("/api/devices", methods=["POST"])
@@ -52,10 +52,16 @@ def wake_device(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Frontend serveren
 @app.route("/")
-def index():
-    """Basisroute voor controle."""
-    return "NPM Wake-on-LAN Applicatie draait!"
+def serve_frontend():
+    """Serve de React frontend."""
+    return send_from_directory(app.static_folder, "index.html")
+
+@app.route("/<path:path>")
+def serve_static_files(path):
+    """Serve static files voor de React frontend."""
+    return send_from_directory(app.static_folder, path)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
