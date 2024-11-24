@@ -1,56 +1,41 @@
-from flask import Flask, send_from_directory, jsonify, request
-from models import db, Device, init_db
-from wakeonlan import send_magic_packet
+# backend/app.py
 
-app = Flask(__name__, static_folder="build", static_url_path="")
+from flask import Flask, jsonify
+from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
+from routes import init_routes
+import logging
+from logging.handlers import RotatingFileHandler
 
-# Databaseconfiguratie
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///devices.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app = Flask(__name__)
+CORS(app)
+app.config.from_object('config.Config')
+db = SQLAlchemy(app)
+ma = Marshmallow(app)
 
-# Initialiseer de database
-init_db(app)
+# Configureer logging
+handler = RotatingFileHandler('app.log', maxBytes=100000, backupCount=3)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
 
-# API-routes
-@app.route("/api/devices", methods=["GET"])
-def get_devices():
-    devices = Device.query.all()
-    return jsonify([
-        {"id": d.id, "domain": d.domain, "ip": d.ip, "mac": d.mac} for d in devices
-    ])
+# Initialiseer routes
+init_routes(app)
 
-@app.route("/api/devices", methods=["POST"])
-def add_device():
-    data = request.json
-    new_device = Device(domain=data["domain"], ip=data["ip"], mac=data["mac"])
-    db.session.add(new_device)
-    db.session.commit()
-    return jsonify({"id": new_device.id, "domain": new_device.domain, "ip": new_device.ip, "mac": new_device.mac}), 201
+# Globale foutafhandeling
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Resource not found'}), 404
 
-@app.route("/api/devices/<int:id>", methods=["DELETE"])
-def delete_device(id):
-    device = Device.query.get_or_404(id)
-    db.session.delete(device)
-    db.session.commit()
-    return jsonify({"message": "Device deleted"})
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({'error': 'Bad request'}), 400
 
-@app.route("/api/wake/<int:id>", methods=["POST"])
-def wake_device(id):
-    device = Device.query.get_or_404(id)
-    try:
-        send_magic_packet(device.mac)
-        return jsonify({"message": f"Magic packet sent to {device.mac}"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Serve React frontend
-@app.route("/")
-def serve_frontend():
-    return send_from_directory(app.static_folder, "index.html")
-
-@app.route("/<path:path>")
-def serve_static_files(path):
-    return send_from_directory(app.static_folder, path)
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
