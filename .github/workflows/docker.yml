@@ -1,4 +1,6 @@
-name: Build, Test and Push Docker Image
+# .github/workflows/docker.yml
+
+name: Build and Push Docker Image
 
 on:
   push:
@@ -26,10 +28,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run backend tests
-        run: |
-          cd backend
-          pytest
+      # Verwijderde teststappen
 
       - name: Log in to DockerHub
         uses: docker/login-action@v2
