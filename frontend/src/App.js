@@ -1,22 +1,35 @@
+// frontend/src/App.js
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Container, Typography, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Snackbar, Alert } from "@mui/material";
+import EditDeviceModal from "./components/EditDeviceModal";
+import ExportButton from "./components/ExportButton";
 
 function App() {
     const [devices, setDevices] = useState([]);
     const [newDevice, setNewDevice] = useState({ domain: "", ip: "", mac: "" });
     const [selectedDevice, setSelectedDevice] = useState(null);
     const [generatedScript, setGeneratedScript] = useState("");
+    const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+    const [editModalOpen, setEditModalOpen] = useState(false);
 
     useEffect(() => {
-        // Haal apparaten op bij het laden van de app
+        fetchDevices();
+    }, []);
+
+    const fetchDevices = () => {
         axios.get("/api/devices")
             .then((res) => setDevices(res.data))
-            .catch((err) => console.error(err));
-    }, []);
+            .catch((err) => {
+                console.error(err);
+                setNotification({ open: true, message: "Fout bij ophalen apparaten.", severity: "error" });
+            });
+    };
 
     const handleAddDevice = () => {
         if (!newDevice.domain || !newDevice.ip || !newDevice.mac) {
-            alert("Vul alle velden in!");
+            setNotification({ open: true, message: "Vul alle velden in.", severity: "warning" });
             return;
         }
 
@@ -24,13 +37,17 @@ function App() {
             .then((res) => {
                 setDevices([...devices, res.data]);
                 setNewDevice({ domain: "", ip: "", mac: "" });
+                setNotification({ open: true, message: "Apparaat toegevoegd!", severity: "success" });
             })
-            .catch((err) => console.error(err));
+            .catch((err) => {
+                console.error(err);
+                setNotification({ open: true, message: "Fout bij toevoegen apparaat.", severity: "error" });
+            });
     };
 
     const handleDeleteDevice = () => {
         if (!selectedDevice) {
-            alert("Selecteer een apparaat om te verwijderen.");
+            setNotification({ open: true, message: "Selecteer een apparaat om te verwijderen.", severity: "warning" });
             return;
         }
 
@@ -38,225 +55,175 @@ function App() {
             .then(() => {
                 setDevices(devices.filter((device) => device.id !== selectedDevice.id));
                 setSelectedDevice(null);
+                setNotification({ open: true, message: "Apparaat verwijderd!", severity: "success" });
             })
-            .catch((err) => console.error(err));
+            .catch((err) => {
+                console.error(err);
+                setNotification({ open: true, message: "Fout bij verwijderen apparaat.", severity: "error" });
+            });
     };
 
     const handleTestWakeOnLan = () => {
         if (!selectedDevice) {
-            alert("Selecteer een apparaat om Wake-on-LAN te testen.");
+            setNotification({ open: true, message: "Selecteer een apparaat om WOL te testen.", severity: "warning" });
             return;
         }
 
         axios.post(`/api/wake/${selectedDevice.id}`)
-            .then(() => alert("Magic Packet verzonden!"))
-            .catch((err) => console.error(err));
+            .then(() => setNotification({ open: true, message: "Magic Packet verzonden!", severity: "success" }))
+            .catch((err) => {
+                console.error(err);
+                setNotification({ open: true, message: "Fout bij verzenden Magic Packet.", severity: "error" });
+            });
     };
 
     const handleGenerateScript = () => {
         if (!selectedDevice) {
-            alert("Selecteer een apparaat om het script te genereren.");
+            setNotification({ open: true, message: "Selecteer een apparaat om het script te genereren.", severity: "warning" });
             return;
         }
 
         axios.get(`/api/nginx-config/${selectedDevice.id}`)
             .then((res) => setGeneratedScript(res.data.nginx_config))
-            .catch((err) => console.error(err));
+            .catch((err) => {
+                console.error(err);
+                setNotification({ open: true, message: "Fout bij genereren script.", severity: "error" });
+            });
+    };
+
+    const handleEditDevice = (device) => {
+        setSelectedDevice(device);
+        setEditModalOpen(true);
+    };
+
+    const handleSaveEditedDevice = (updatedDevice) => {
+        axios.put(`/api/devices/${updatedDevice.id}`, updatedDevice)
+            .then((res) => {
+                setDevices(devices.map(device => device.id === res.data.id ? res.data : device));
+                setEditModalOpen(false);
+                setNotification({ open: true, message: "Apparaat succesvol bijgewerkt.", severity: "success" });
+            })
+            .catch((err) => {
+                console.error(err);
+                setNotification({ open: true, message: "Fout bij bijwerken apparaat.", severity: "error" });
+            });
     };
 
     return (
-        <div style={styles.container}>
-            <h1 style={styles.title}>NPM Wake-on-LAN Configurator</h1>
+        <Container>
+            <Typography variant="h4" gutterBottom style={{ marginTop: '20px' }}>
+                NPM Wake-on-LAN Configurator
+            </Typography>
 
-            <div style={styles.form}>
-                <h2>Add Configuration</h2>
-                <input
-                    type="text"
-                    placeholder="Domain Name"
+            <div style={{ marginBottom: '40px' }}>
+                <Typography variant="h6" gutterBottom>
+                    Voeg Apparaten Toe
+                </Typography>
+                <TextField
+                    label="Domeinnaam"
+                    variant="outlined"
                     value={newDevice.domain}
                     onChange={(e) => setNewDevice({ ...newDevice, domain: e.target.value })}
-                    style={styles.input}
+                    style={{ marginRight: '10px', marginBottom: '10px' }}
                 />
-                <input
-                    type="text"
-                    placeholder="Internal IP"
+                <TextField
+                    label="Intern IP"
+                    variant="outlined"
                     value={newDevice.ip}
                     onChange={(e) => setNewDevice({ ...newDevice, ip: e.target.value })}
-                    style={styles.input}
+                    style={{ marginRight: '10px', marginBottom: '10px' }}
                 />
-                <input
-                    type="text"
-                    placeholder="MAC Address"
+                <TextField
+                    label="MAC-adres"
+                    variant="outlined"
                     value={newDevice.mac}
                     onChange={(e) => setNewDevice({ ...newDevice, mac: e.target.value })}
-                    style={styles.input}
+                    style={{ marginRight: '10px', marginBottom: '10px' }}
                 />
-                <button onClick={handleAddDevice} style={styles.button}>Add Device</button>
+                <Button variant="contained" color="primary" onClick={handleAddDevice}>
+                    Voeg Toe
+                </Button>
             </div>
 
-            <div style={styles.tableContainer}>
-                <h2 style={styles.sectionTitle}>Devices</h2>
-                <table style={styles.table}>
-                    <thead>
-                        <tr>
-                            <th style={styles.th}></th>
-                            <th style={styles.th}>Domain</th>
-                            <th style={styles.th}>Internal IP</th>
-                            <th style={styles.th}>MAC Address</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <TableContainer component={Paper} style={{ marginBottom: '20px' }}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell></TableCell>
+                            <TableCell>Domeinnaam</TableCell>
+                            <TableCell>Intern IP</TableCell>
+                            <TableCell>MAC-adres</TableCell>
+                            <TableCell>Acties</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
                         {devices.map((device) => (
-                            <tr key={device.id}>
-                                <td style={styles.td}>
+                            <TableRow key={device.id} selected={selectedDevice?.id === device.id}>
+                                <TableCell>
                                     <input
                                         type="radio"
                                         name="selectedDevice"
                                         checked={selectedDevice?.id === device.id}
                                         onChange={() => setSelectedDevice(device)}
                                     />
-                                </td>
-                                <td style={styles.td}>{device.domain}</td>
-                                <td style={styles.td}>{device.ip}</td>
-                                <td style={styles.td}>{device.mac}</td>
-                            </tr>
+                                </TableCell>
+                                <TableCell>{device.domain}</TableCell>
+                                <TableCell>{device.ip}</TableCell>
+                                <TableCell>{device.mac}</TableCell>
+                                <TableCell>
+                                    <Button variant="outlined" color="primary" onClick={() => handleEditDevice(device)} style={{ marginRight: '10px' }}>
+                                        Bewerken
+                                    </Button>
+                                    <Button variant="outlined" color="secondary" onClick={handleDeleteDevice}>
+                                        Verwijderen
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-            </div>
+                    </TableBody>
+                </Table>
+            </TableContainer>
 
-            <div style={styles.actionButtons}>
-                <button onClick={handleTestWakeOnLan} style={styles.actionButton}>
+            <div style={{ marginBottom: '20px' }}>
+                <Button variant="contained" color="success" onClick={handleTestWakeOnLan} style={{ marginRight: '10px' }}>
                     Test WOL
-                </button>
-                <button onClick={handleGenerateScript} style={styles.actionButton}>
-                    Generate Script
-                </button>
-                <button onClick={handleDeleteDevice} style={styles.deleteButton}>
-                    Delete
-                </button>
+                </Button>
+                <Button variant="contained" color="info" onClick={handleGenerateScript} style={{ marginRight: '10px' }}>
+                    Genereer Script
+                </Button>
+                <ExportButton devices={devices} />
             </div>
 
             {generatedScript && (
-                <div style={styles.scriptContainer}>
-                    <h2 style={styles.sectionTitle}>Generated Script</h2>
-                    <textarea readOnly value={generatedScript} style={styles.textarea}></textarea>
-                    <button onClick={() => navigator.clipboard.writeText(generatedScript)} style={styles.button}>
-                        Copy Script
-                    </button>
+                <div style={{ marginTop: '20px' }}>
+                    <Typography variant="h6" gutterBottom>
+                        Genereerd Nginx Script
+                    </Typography>
+                    <textarea
+                        readOnly
+                        value={generatedScript}
+                        style={{ width: '100%', height: '200px', padding: '10px' }}
+                    ></textarea>
+                    <Button variant="contained" color="primary" onClick={() => navigator.clipboard.writeText(generatedScript)} style={{ marginTop: '10px' }}>
+                        Kopieer Script
+                    </Button>
                 </div>
             )}
-        </div>
+
+            <EditDeviceModal
+                open={editModalOpen}
+                handleClose={() => setEditModalOpen(false)}
+                device={selectedDevice}
+                handleSave={handleSaveEditedDevice}
+            />
+
+            <Snackbar open={notification.open} autoHideDuration={6000} onClose={() => setNotification({ ...notification, open: false })}>
+                <Alert onClose={() => setNotification({ ...notification, open: false })} severity={notification.severity} sx={{ width: '100%' }}>
+                    {notification.message}
+                </Alert>
+            </Snackbar>
+        </Container>
     );
 }
-
-const styles = {
-    container: {
-        backgroundColor: "#1a1a1a",
-        color: "#e0e0e0",
-        padding: "20px",
-        fontFamily: "Arial, sans-serif",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-    },
-    title: {
-        fontSize: "24px",
-        marginBottom: "20px",
-        color: "#ffffff",
-    },
-    form: {
-        marginBottom: "30px",
-        width: "90%",
-        maxWidth: "600px",
-        display: "flex",
-        flexDirection: "column",
-    },
-    input: {
-        marginBottom: "10px",
-        padding: "10px",
-        borderRadius: "5px",
-        border: "1px solid #444",
-        backgroundColor: "#2a2a2a",
-        color: "#e0e0e0",
-        fontSize: "14px",
-    },
-    button: {
-        padding: "10px",
-        backgroundColor: "#007bff",
-        color: "#fff",
-        border: "none",
-        borderRadius: "5px",
-        cursor: "pointer",
-        fontSize: "14px",
-        textAlign: "center",
-    },
-    tableContainer: {
-        width: "100%",
-        maxWidth: "800px",
-        marginBottom: "20px",
-        overflowX: "auto",
-    },
-    table: {
-        width: "100%",
-        borderCollapse: "collapse",
-        backgroundColor: "#2a2a2a",
-    },
-    th: {
-        textAlign: "left",
-        padding: "10px",
-        borderBottom: "2px solid #444",
-        color: "#e0e0e0",
-        fontSize: "calc(12px + 0.5vw)",
-    },
-    td: {
-        padding: "10px",
-        borderBottom: "1px solid #444",
-        color: "#e0e0e0",
-        fontSize: "calc(10px + 0.5vw)",
-    },
-    actionButtons: {
-        display: "flex",
-        gap: "10px",
-        justifyContent: "center",
-        marginBottom: "20px",
-    },
-    actionButton: {
-        padding: "10px 20px",
-        backgroundColor: "#28a745",
-        color: "#fff",
-        border: "none",
-        borderRadius: "5px",
-        cursor: "pointer",
-        fontSize: "14px",
-    },
-    deleteButton: {
-        padding: "10px 20px",
-        backgroundColor: "#dc3545",
-        color: "#fff",
-        border: "none",
-        borderRadius: "5px",
-        cursor: "pointer",
-        fontSize: "14px",
-    },
-    scriptContainer: {
-        width: "90%",
-        maxWidth: "600px",
-    },
-    sectionTitle: {
-        fontSize: "18px",
-        marginBottom: "10px",
-    },
-    textarea: {
-        width: "100%",
-        height: "100px",
-        backgroundColor: "#2a2a2a",
-        color: "#e0e0e0",
-        padding: "10px",
-        border: "1px solid #444",
-        borderRadius: "5px",
-    },
-};
 
 export default App;
