@@ -8,12 +8,18 @@ function App() {
     const [generatedScript, setGeneratedScript] = useState("");
 
     useEffect(() => {
+        // Haal apparaten op bij het laden van de app
         axios.get("/api/devices")
             .then((res) => setDevices(res.data))
             .catch((err) => console.error(err));
     }, []);
 
     const handleAddDevice = () => {
+        if (!newDevice.domain || !newDevice.ip || !newDevice.mac) {
+            alert("Vul alle velden in!");
+            return;
+        }
+
         axios.post("/api/devices", newDevice)
             .then((res) => {
                 setDevices([...devices, res.data]);
@@ -24,7 +30,7 @@ function App() {
 
     const handleDeleteDevice = () => {
         if (!selectedDevice) {
-            alert("Select a device to delete.");
+            alert("Selecteer een apparaat om te verwijderen.");
             return;
         }
 
@@ -38,18 +44,18 @@ function App() {
 
     const handleTestWakeOnLan = () => {
         if (!selectedDevice) {
-            alert("Select a device to test WOL.");
+            alert("Selecteer een apparaat om Wake-on-LAN te testen.");
             return;
         }
 
         axios.post(`/api/wake/${selectedDevice.id}`)
-            .then(() => alert("Magic Packet Sent!"))
+            .then(() => alert("Magic Packet verzonden!"))
             .catch((err) => console.error(err));
     };
 
     const handleGenerateScript = () => {
         if (!selectedDevice) {
-            alert("Select a device to generate the script.");
+            alert("Selecteer een apparaat om het script te genereren.");
             return;
         }
 
@@ -61,6 +67,7 @@ function App() {
     return (
         <div style={styles.container}>
             <h1 style={styles.title}>NPM Wake-on-LAN Configurator</h1>
+
             <div style={styles.form}>
                 <h2>Add Configuration</h2>
                 <input
@@ -186,9 +193,10 @@ const styles = {
         textAlign: "center",
     },
     tableContainer: {
-        width: "90%",
+        width: "100%",
         maxWidth: "800px",
         marginBottom: "20px",
+        overflowX: "auto",
     },
     table: {
         width: "100%",
@@ -200,11 +208,13 @@ const styles = {
         padding: "10px",
         borderBottom: "2px solid #444",
         color: "#e0e0e0",
+        fontSize: "calc(12px + 0.5vw)",
     },
     td: {
         padding: "10px",
         borderBottom: "1px solid #444",
         color: "#e0e0e0",
+        fontSize: "calc(10px + 0.5vw)",
     },
     actionButtons: {
         display: "flex",
