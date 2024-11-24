@@ -4,4 +4,3 @@ Flask-SQLAlchemy
 wakeonlan
 Flask-Marshmallow
 marshmallow
-pytest
