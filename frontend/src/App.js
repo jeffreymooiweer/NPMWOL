@@ -4,6 +4,7 @@ import axios from "axios";
 function App() {
     const [devices, setDevices] = useState([]);
     const [newDevice, setNewDevice] = useState({ domain: "", ip: "", mac: "" });
+    const [selectedDevice, setSelectedDevice] = useState(null);
     const [generatedScript, setGeneratedScript] = useState("");
 
     useEffect(() => {
@@ -21,22 +22,38 @@ function App() {
             .catch((err) => console.error(err));
     };
 
-    const handleDeleteDevice = (id) => {
-        axios.delete(`/api/devices/${id}`)
+    const handleDeleteDevice = () => {
+        if (!selectedDevice) {
+            alert("Select a device to delete.");
+            return;
+        }
+
+        axios.delete(`/api/devices/${selectedDevice.id}`)
             .then(() => {
-                setDevices(devices.filter((device) => device.id !== id));
+                setDevices(devices.filter((device) => device.id !== selectedDevice.id));
+                setSelectedDevice(null);
             })
             .catch((err) => console.error(err));
     };
 
-    const handleTestWakeOnLan = (id) => {
-        axios.post(`/api/wake/${id}`)
+    const handleTestWakeOnLan = () => {
+        if (!selectedDevice) {
+            alert("Select a device to test WOL.");
+            return;
+        }
+
+        axios.post(`/api/wake/${selectedDevice.id}`)
             .then(() => alert("Magic Packet Sent!"))
             .catch((err) => console.error(err));
     };
 
-    const handleGenerateScript = (id) => {
-        axios.get(`/api/nginx-config/${id}`)
+    const handleGenerateScript = () => {
+        if (!selectedDevice) {
+            alert("Select a device to generate the script.");
+            return;
+        }
+
+        axios.get(`/api/nginx-config/${selectedDevice.id}`)
             .then((res) => setGeneratedScript(res.data.nginx_config))
             .catch((err) => console.error(err));
     };
@@ -75,33 +92,42 @@ function App() {
                 <table style={styles.table}>
                     <thead>
                         <tr>
+                            <th style={styles.th}></th>
                             <th style={styles.th}>Domain</th>
                             <th style={styles.th}>Internal IP</th>
                             <th style={styles.th}>MAC Address</th>
-                            <th style={styles.th}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {devices.map((device) => (
                             <tr key={device.id}>
+                                <td style={styles.td}>
+                                    <input
+                                        type="radio"
+                                        name="selectedDevice"
+                                        checked={selectedDevice?.id === device.id}
+                                        onChange={() => setSelectedDevice(device)}
+                                    />
+                                </td>
                                 <td style={styles.td}>{device.domain}</td>
                                 <td style={styles.td}>{device.ip}</td>
                                 <td style={styles.td}>{device.mac}</td>
-                                <td style={styles.td}>
-                                    <button onClick={() => handleTestWakeOnLan(device.id)} style={styles.actionButton}>
-                                        Test WOL
-                                    </button>
-                                    <button onClick={() => handleGenerateScript(device.id)} style={styles.actionButton}>
-                                        Generate Script
-                                    </button>
-                                    <button onClick={() => handleDeleteDevice(device.id)} style={styles.deleteButton}>
-                                        Delete
-                                    </button>
-                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div style={styles.actionButtons}>
+                <button onClick={handleTestWakeOnLan} style={styles.actionButton}>
+                    Test WOL
+                </button>
+                <button onClick={handleGenerateScript} style={styles.actionButton}>
+                    Generate Script
+                </button>
+                <button onClick={handleDeleteDevice} style={styles.deleteButton}>
+                    Delete
+                </button>
             </div>
 
             {generatedScript && (
@@ -162,7 +188,7 @@ const styles = {
     tableContainer: {
         width: "90%",
         maxWidth: "800px",
-        marginBottom: "30px",
+        marginBottom: "20px",
     },
     table: {
         width: "100%",
@@ -180,23 +206,29 @@ const styles = {
         borderBottom: "1px solid #444",
         color: "#e0e0e0",
     },
+    actionButtons: {
+        display: "flex",
+        gap: "10px",
+        justifyContent: "center",
+        marginBottom: "20px",
+    },
     actionButton: {
-        padding: "5px 10px",
-        margin: "0 5px",
+        padding: "10px 20px",
         backgroundColor: "#28a745",
         color: "#fff",
         border: "none",
         borderRadius: "5px",
         cursor: "pointer",
+        fontSize: "14px",
     },
     deleteButton: {
-        padding: "5px 10px",
-        margin: "0 5px",
+        padding: "10px 20px",
         backgroundColor: "#dc3545",
         color: "#fff",
         border: "none",
         borderRadius: "5px",
         cursor: "pointer",
+        fontSize: "14px",
     },
     scriptContainer: {
         width: "90%",
