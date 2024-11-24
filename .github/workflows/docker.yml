@@ -32,7 +32,6 @@ jobs:
         run: |
           cd backend
           # Voeg hier je testcommando's toe, bijvoorbeeld pytest
-          # Zorg ervoor dat je tests hebt binnen backend/tests/
           pytest
 
       - name: Log in to DockerHub
