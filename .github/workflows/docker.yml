@@ -1,5 +1,3 @@
-# .github/workflows/docker.yml
-
 name: Build, Test and Push Docker Image
 
 on:
@@ -31,7 +29,6 @@ jobs:
       - name: Run backend tests
         run: |
           cd backend
-          # Voeg hier je testcommando's toe, bijvoorbeeld pytest
           pytest
 
       - name: Log in to DockerHub
