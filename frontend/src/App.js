@@ -7,7 +7,6 @@ function App() {
     const [generatedScript, setGeneratedScript] = useState("");
 
     useEffect(() => {
-        // Haal apparaten op wanneer de app wordt geladen
         axios.get("/api/devices")
             .then((res) => setDevices(res.data))
             .catch((err) => console.error(err));
@@ -72,23 +71,23 @@ function App() {
             </div>
 
             <div style={styles.tableContainer}>
-                <h2>Devices</h2>
+                <h2 style={styles.sectionTitle}>Devices</h2>
                 <table style={styles.table}>
                     <thead>
                         <tr>
-                            <th>Domain</th>
-                            <th>Internal IP</th>
-                            <th>MAC Address</th>
-                            <th>Actions</th>
+                            <th style={styles.th}>Domain</th>
+                            <th style={styles.th}>Internal IP</th>
+                            <th style={styles.th}>MAC Address</th>
+                            <th style={styles.th}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {devices.map((device) => (
                             <tr key={device.id}>
-                                <td>{device.domain}</td>
-                                <td>{device.ip}</td>
-                                <td>{device.mac}</td>
-                                <td>
+                                <td style={styles.td}>{device.domain}</td>
+                                <td style={styles.td}>{device.ip}</td>
+                                <td style={styles.td}>{device.mac}</td>
+                                <td style={styles.td}>
                                     <button onClick={() => handleTestWakeOnLan(device.id)} style={styles.actionButton}>
                                         Test WOL
                                     </button>
@@ -107,7 +106,7 @@ function App() {
 
             {generatedScript && (
                 <div style={styles.scriptContainer}>
-                    <h2>Generated Script</h2>
+                    <h2 style={styles.sectionTitle}>Generated Script</h2>
                     <textarea readOnly value={generatedScript} style={styles.textarea}></textarea>
                     <button onClick={() => navigator.clipboard.writeText(generatedScript)} style={styles.button}>
                         Copy Script
@@ -120,45 +119,70 @@ function App() {
 
 const styles = {
     container: {
-        backgroundColor: "#121212",
-        color: "#fff",
+        backgroundColor: "#1a1a1a",
+        color: "#e0e0e0",
         padding: "20px",
-        fontFamily: "Arial",
+        fontFamily: "Arial, sans-serif",
         minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
     },
     title: {
-        textAlign: "center",
+        fontSize: "24px",
+        marginBottom: "20px",
+        color: "#ffffff",
     },
     form: {
-        marginBottom: "20px",
+        marginBottom: "30px",
+        width: "90%",
+        maxWidth: "600px",
+        display: "flex",
+        flexDirection: "column",
     },
     input: {
-        margin: "5px",
+        marginBottom: "10px",
         padding: "10px",
         borderRadius: "5px",
-        border: "1px solid #555",
-        backgroundColor: "#1e1e1e",
-        color: "#fff",
+        border: "1px solid #444",
+        backgroundColor: "#2a2a2a",
+        color: "#e0e0e0",
+        fontSize: "14px",
     },
     button: {
-        margin: "5px",
         padding: "10px",
         backgroundColor: "#007bff",
         color: "#fff",
         border: "none",
         borderRadius: "5px",
         cursor: "pointer",
+        fontSize: "14px",
+        textAlign: "center",
     },
     tableContainer: {
-        marginTop: "20px",
+        width: "90%",
+        maxWidth: "800px",
+        marginBottom: "30px",
     },
     table: {
         width: "100%",
         borderCollapse: "collapse",
+        backgroundColor: "#2a2a2a",
+    },
+    th: {
+        textAlign: "left",
+        padding: "10px",
+        borderBottom: "2px solid #444",
+        color: "#e0e0e0",
+    },
+    td: {
+        padding: "10px",
+        borderBottom: "1px solid #444",
+        color: "#e0e0e0",
     },
     actionButton: {
-        margin: "0 5px",
         padding: "5px 10px",
+        margin: "0 5px",
         backgroundColor: "#28a745",
         color: "#fff",
         border: "none",
@@ -166,8 +190,8 @@ const styles = {
         cursor: "pointer",
     },
     deleteButton: {
-        margin: "0 5px",
         padding: "5px 10px",
+        margin: "0 5px",
         backgroundColor: "#dc3545",
         color: "#fff",
         border: "none",
@@ -175,15 +199,20 @@ const styles = {
         cursor: "pointer",
     },
     scriptContainer: {
-        marginTop: "20px",
+        width: "90%",
+        maxWidth: "600px",
+    },
+    sectionTitle: {
+        fontSize: "18px",
+        marginBottom: "10px",
     },
     textarea: {
         width: "100%",
         height: "100px",
-        backgroundColor: "#1e1e1e",
-        color: "#fff",
+        backgroundColor: "#2a2a2a",
+        color: "#e0e0e0",
         padding: "10px",
-        border: "1px solid #555",
+        border: "1px solid #444",
         borderRadius: "5px",
     },
 };
